@@ -65,6 +65,6 @@ There are currently no experiments for this issue. It is recommended to use the 
 Since most players will not want to play an entire game at one sitting, most games include save and load (or restore) commands.  
 
 ## Author 
-Edgar Hou (202118020425) CDUT-OBU L5S3
+Edgar Hou (202118020425) CDUT-OBU L5S3  
 GitHub: https://github.com/Orangestella  
 Email: hou.guanyu@student.zy.cdut.edu.cn
