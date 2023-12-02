@@ -7,6 +7,8 @@
 #include <string>
 #include <forward_list>
 #include <list>
+#include <vector>
+#include "GameObject.h"
 
 using std::string;
 
@@ -30,6 +32,7 @@ class Room {
     Room* east;
     Room* west;
 public:
+    std::vector<GameObject*> roomObjects;
     /**
      * Constructs a new Room.
      * @param _name Name of the room.
@@ -70,6 +73,9 @@ public:
     void setEast(Room* _east);
     void setSouth(Room* _south);
     void setWest(Room* _west);
+
+    void addObject(GameObject* gameObject);
+    GameObject* addObject(const string* _name, const string* _desc, const string* _keyword);
 
 };
 

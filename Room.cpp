@@ -1,6 +1,7 @@
 
 #include "Room.h"
 #include "wordwrap.h"
+#include "strings.h"
 
 /**
  * Stores a static list of all rooms.
@@ -30,6 +31,14 @@ void Room::describe() const {
     wrapEndPara();
     wrapOut(this->description);
     wrapEndPara();
+    wrapOut(&roomObjectsMessage);
+    wrapEndPara();
+    for (GameObject* gameObject: this->roomObjects){
+        wrapOut(gameObject->name);
+        wrapEndPara();
+        wrapOut(gameObject->description);
+        wrapEndPara();
+    }
 }
 
 /**
@@ -85,4 +94,14 @@ void Room::setSouth(Room* _south) {
 }
 void Room::setWest(Room* _west) {
     this->west = _west;
+}
+
+void Room::addObject(GameObject* gameObject) {
+    this->roomObjects.push_back(gameObject);
+}
+
+GameObject *Room::addObject(const string* _name, const string *_desc, const string* _keyword) {
+    auto* object = new GameObject(_name, _desc, _keyword);
+    this->roomObjects.push_back(object);
+    return object;
 }
