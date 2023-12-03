@@ -49,9 +49,10 @@ Before that, you should know about this **specification**:
 _Other referencing string variables are not recommended for modification._  
 **Please note**: If you have modified any variable names, please make the corresponding modifications in the `initRooms` function, or use the refactoring feature of the IDE
 2. Content rules for rooms and objects:  
-    * Keyword of object: the keyword of object should be unique. It must comply with this format:  
+    * ~~Keyword of object: the keyword of object should be **unique**. **It must comply with this format**:  
    `{type}:{name}`  
-   which `{type}` must be a single character. `f` is reserved as a keyword for food and **cannot be modified**. You can decide on other types of keywords by yourself. In this project, `t` means tool as sample.  
+   which `{type}` must be a single character. `f` is reserved as a keyword for food and **cannot be modified**. You can decide on other types of keywords by yourself. In this project, `t` means tool as sample.~~  
+    * No more keyword format limitation!
     * Energy of food: it should be limited in a range of 1-10, otherwise the engine will throw out `std::invalid_argument`  
     * The remaining content can be modified as needed.  
 

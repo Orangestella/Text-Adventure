@@ -21,25 +21,25 @@ const std::string r5desc = "You are in room 109. It's a multimedia classroom, bu
 //object information
 const std::string o1name = "Golden apple";
 const std::string o1desc = "The shining but pixelated apple may have come from a well-known game. Effect: strength + 10";
-const std::string o1key = "f:golden_apple";
+const std::string o1key = "golden_apple";
 const std::string o2name = "Honey cake";
 const std::string o2desc = "A derivative product of a yellow bear's favorite food that looks delicious. Effect: strength + 5";
-const std::string o2key = "f:honey_cake";
+const std::string o2key = "honey_cake";
 const std::string o3name = "Brownie";
 const std::string o3desc = "A brownie made by Alice of which the dough has a moist taste but is not sticky, with a refreshing sweet taste. Effect: strength + 8";
-const std::string o3key = "f:brownie";
+const std::string o3key = "brownie";
 const std::string o4name = "Sugar Rush";
 const std::string o4desc = "The alcohol content of a sugar rush varies from bartender to bartender, but the one in front of you is the non-alcoholic version. Effect: strength + 6";
-const std::string o4key = "f:sugar_rush";
+const std::string o4key = "sugar_rush";
 const std::string o5name = "AK-47";
 const std::string o5desc = "A rusty assault rifle. You can vaguely see a small line written on it: Made in Wa state";
-const std::string o5key = "t:ak47";
+const std::string o5key = "ak47";
 const std::string o6name = "Single piece scissor";
 const std::string o6desc = "A huge, red, only one piece of scissor, you want to know where the other piece is.";
-const std::string o6key = "t:single_scissor";
+const std::string o6key = "single_scissor";
 const std::string o7name = "Melon Knife";
 const std::string o7desc = "There seems to be no regulation on the shape of the watermelon knife, but everyone knows that it is used to chop watermelons. ";
-const std::string o7key = "t:melon_knife";
+const std::string o7key = "melon_knife";
 
 //command message
 const std::string badExit = "You can't go that way.";

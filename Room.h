@@ -32,7 +32,7 @@ class Room {
     Room* east;
     Room* west;
 public:
-    std::vector<GameObject*> roomObjects;
+    std::list<GameObject*> roomObjects;
     /**
      * Constructs a new Room.
      * @param _name Name of the room.

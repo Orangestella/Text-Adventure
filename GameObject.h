@@ -14,6 +14,7 @@ public:
     const string* name;
     const string* description;
     const string* keyword;
+    virtual string getType();
     static std::list<GameObject*> allObjects;
     static GameObject* searchAll(const std::string &keyword);
     static void describe(GameObject* object);
@@ -27,6 +28,7 @@ private:
 public:
     FoodObject(const string* _name, const string* _desc, const string* _keyword, uint8_t _energy);
     uint8_t getEnergy() const;
+    string getType() override;
 };
 
 

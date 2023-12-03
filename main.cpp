@@ -127,6 +127,7 @@ void gameLoop() {
         /* The first word of a command would normally be the verb. The first word is the text before the first
          * space, or if there is no space, the whole string. */
         auto endOfVerb = static_cast<uint8_t>(commandBuffer.find(' '));
+        /*Check if the command string contains space delimiters*/
         if(endOfVerb != static_cast<uint8_t>(std::string::npos)) secCommand = commandBuffer.substr(endOfVerb+1);
 
         /* We could copy the verb to another string but there's no reason to, we'll just compare it in place. */
@@ -181,25 +182,25 @@ void gameLoop() {
         }
         else if(commandBuffer.compare(0,endOfVerb,"get") == 0){
             commandOk = true;
-            uint8_t state = currentState->pickObject(secCommand);
+            uint8_t state = currentState->pickObject(secCommand); // Gain the state of the operation.
             switch (state) {
-                case 0:
+                case 0: // picked successfully.
                     wrapOut(&pickObjectMessage0);
                     wrapEndPara();
                     break;
-                case 1:
+                case 1: // already in the inventory.
                     wrapOut(&pickObjectMessage1);
                     wrapEndPara();
                     break;
-                case 2:
+                case 2: // cannot find.
                     wrapOut(&pickObjectMessage2);
                     wrapEndPara();
                     break;
-                case 3:
+                case 3: // no exist.
                     wrapOut(&objectNotFound);
                     wrapEndPara();
                     break;
-                default:
+                default: // bad command.
                     wrapOut(&badCommand);
                     wrapEndPara();
             }
@@ -208,23 +209,23 @@ void gameLoop() {
             commandOk = true;
             uint8_t state = currentState->dropObject(secCommand);
             switch (state) {
-                case 0:
+                case 0:  // dropped successfully.
                     wrapOut(&dropObjectMessage0);
                     wrapEndPara();
                     break;
-                case 1:
+                case 1: // already in the room.
                     wrapOut(&dropObjectMessage1);
                     wrapEndPara();
                     break;
-                case 2:
+                case 2: // cannot find.
                     wrapOut(&dropObjectMessage2);
                     wrapEndPara();
                     break;
-                case 3:
+                case 3: // no exist.
                     wrapOut(&objectNotFound);
                     wrapEndPara();
                     break;
-                default:
+                default: // bad command.
                     wrapOut(&badCommand);
                     wrapEndPara();
             }

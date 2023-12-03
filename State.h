@@ -9,10 +9,10 @@
 
 class State {
     Room *currentRoom;
-    std::vector<GameObject*> inventory;
+    std::list<GameObject*> inventory;
     int16_t strength;
-    GameObject* searchRoom(const string &keyword, bool modify= false);
-    GameObject* searchInventory(const string &keyword, bool modify= false);
+    GameObject* searchRoom(const string &keyword);
+    GameObject* searchInventory(const string &keyword);
 public:
     explicit State(Room *startRoom);
     void goTo(Room *target);

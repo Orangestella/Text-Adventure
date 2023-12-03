@@ -59,16 +59,13 @@ int16_t State::getStrength() const {
 /**
  * Function to search for a specific object in the current room based on a keyword.
  * @param keyword The keyword to search for.
- * @param modify A flag indicating whether to modify the room's objects list. Default by false.
  * @return A pointer to the matching GameObject if found, otherwise nullptr.
  */
-GameObject* State::searchRoom(const std::string &keyword, bool modify) {
+GameObject* State::searchRoom(const std::string &keyword) {
     GameObject* objectFound = nullptr;
-    std::vector<GameObject*>::iterator it;
-    for (it=currentRoom->roomObjects.begin(); it != currentRoom->roomObjects.end(); it++){
-        if (keyword == *((*it)->keyword)){
-            objectFound = *it;
-            if (modify) currentRoom->roomObjects.erase(it);
+    for(GameObject* object:currentRoom->roomObjects){
+        if (keyword == *(object->keyword)){
+            objectFound = object;
             break;
         }
     }
@@ -78,16 +75,13 @@ GameObject* State::searchRoom(const std::string &keyword, bool modify) {
 /**
  * Search for a specific object in the player's inventory based on a keyword.
  * @param keyword The keyword to search for.
- * @param modify A flag indicating whether to modify the inventory's objects list. Default by false.
  * @return A pointer to the matching GameObject if found, otherwise nullptr.
  */
-GameObject* State::searchInventory(const std::string &keyword, bool modify) {
+GameObject* State::searchInventory(const std::string &keyword) {
     GameObject* objectFound = nullptr;
-    std::vector<GameObject*>::iterator it;
-    for (it=this->inventory.begin(); it != this->inventory.end(); it++){
-        if (keyword == *((*it)->keyword)){
-            objectFound = *it;
-            if (modify) this->inventory.erase(it);
+    for (GameObject* object:inventory){
+        if (keyword == *(object->keyword)){
+            objectFound = object;
             break;
         }
     }
@@ -102,12 +96,13 @@ GameObject* State::searchInventory(const std::string &keyword, bool modify) {
  */
 uint8_t State::pickObject(const std::string &keyword) {
     uint8_t operationState;
-    GameObject* pickedObject = searchRoom(keyword, true);
+    GameObject* pickedObject = searchRoom(keyword);
     if (pickedObject != nullptr){
         this->inventory.push_back(pickedObject);
+        currentRoom->roomObjects.remove(pickedObject);
         operationState = 0; // successfully get
     }
-    else if (searchInventory(keyword, false) != nullptr) operationState = 1; // already in inventory
+    else if (searchInventory(keyword) != nullptr) operationState = 1; // already in inventory
     else if (GameObject::searchAll(keyword) != nullptr) operationState = 2; // not in this room
     else operationState = 3; // not exist
     return operationState;
@@ -121,12 +116,13 @@ uint8_t State::pickObject(const std::string &keyword) {
  */
 uint8_t State::dropObject(const std::string &keyword) {
     uint8_t operationState;
-    GameObject* pickedObject = searchInventory(keyword, true);
-    if (pickedObject != nullptr){
-        currentRoom->roomObjects.push_back(pickedObject);
+    GameObject* droppedObject = searchInventory(keyword);
+    if (droppedObject != nullptr){
+        currentRoom->roomObjects.push_back(droppedObject);
+        inventory.remove(droppedObject);
         operationState = 0; // successfully drop
     }
-    else if(searchRoom(keyword, false) != nullptr) operationState = 1; // already in room
+    else if(searchRoom(keyword) != nullptr) operationState = 1; // already in room
     else if(GameObject::searchAll(keyword) == nullptr) operationState = 3; // not exist
     else operationState = 2; // not in inventory
     return operationState;
@@ -152,11 +148,10 @@ void State::inventoryDescribe() const {
  */
 uint8_t State::eat(const string &keyword) {
     uint8_t state = 0;
-    if(keyword[0] == 'f'){
-        auto* food = (FoodObject*)(this->searchInventory(keyword, true));
-        if(food != nullptr) this->changeStrength(food->getEnergy());
-        else state = 1;
-    } else state = 2;
+    GameObject* food = searchInventory(keyword);
+    if (food == nullptr) state = 1;
+    else if(food->getType() == "food") this->changeStrength(dynamic_cast<FoodObject*>(food)->getEnergy());
+    else state = 2;
     return state;
 }
 
