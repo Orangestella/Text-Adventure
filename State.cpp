@@ -135,7 +135,7 @@ void State::inventoryDescribe() const {
     wrapOut(&inventoryObjectsMessage);
     wrapEndPara();
     for (GameObject* object:inventory){
-        wrapOut(object->keyword);
+        wrapOut(object->name);
         wrapEndPara();
     }
 }
