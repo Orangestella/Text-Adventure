@@ -99,6 +99,11 @@ void initState() {
     while(true) {
         std::this_thread::sleep_for(std::chrono::minutes(1));
         currentState->changeStrength(-1);
+        if (currentState->getStrength() <= 0) {
+            wrapOut(&terminateMessage0);
+            wrapEndPara();
+            exit(0);
+        }
     }
 }
 
@@ -110,16 +115,6 @@ void gameLoop() {
     std::thread timer(timerThread);
     timer.detach();
     while (!gameOver) {
-        /*reduce strength by 1 per minute*/
-
-        /*when strength goes to 0, the program shall be terminated*/
-        if (currentState->getStrength() <= 0) {
-            wrapOut(&terminateMessage0);
-            wrapEndPara();
-            gameOver = true;
-            continue;
-        }
-
         /* Ask for a command. */
         bool commandOk = false;
         inputCommand(&commandBuffer);
@@ -129,6 +124,7 @@ void gameLoop() {
         auto endOfVerb = static_cast<uint8_t>(commandBuffer.find(' '));
         /*Check if the command string contains space delimiters*/
         if(endOfVerb != static_cast<uint8_t>(std::string::npos)) secCommand = commandBuffer.substr(endOfVerb+1);
+        else secCommand = "NULL"; //
 
         /* We could copy the verb to another string but there's no reason to, we'll just compare it in place. */
         /* Command to go north. */
@@ -182,85 +178,105 @@ void gameLoop() {
         }
         else if(commandBuffer.compare(0,endOfVerb,"get") == 0){
             commandOk = true;
-            uint8_t state = currentState->pickObject(secCommand); // Gain the state of the operation.
-            switch (state) {
-                case 0: // picked successfully.
-                    wrapOut(&pickObjectMessage0);
-                    wrapEndPara();
-                    break;
-                case 1: // already in the inventory.
-                    wrapOut(&pickObjectMessage1);
-                    wrapEndPara();
-                    break;
-                case 2: // cannot find.
-                    wrapOut(&pickObjectMessage2);
-                    wrapEndPara();
-                    break;
-                case 3: // no exist.
-                    wrapOut(&objectNotFound);
-                    wrapEndPara();
-                    break;
-                default: // bad command.
-                    wrapOut(&badCommand);
-                    wrapEndPara();
+            if (secCommand!="NULL") {
+                uint8_t state = currentState->pickObject(secCommand); // Gain the state of the operation.
+                switch (state) {
+                    case 0: // picked successfully.
+                        wrapOut(&pickObjectMessage0);
+                        wrapEndPara();
+                        break;
+                    case 1: // already in the inventory.
+                        wrapOut(&pickObjectMessage1);
+                        wrapEndPara();
+                        break;
+                    case 2: // cannot find.
+                        wrapOut(&pickObjectMessage2);
+                        wrapEndPara();
+                        break;
+                    case 3: // no exist.
+                        wrapOut(&objectNotFound);
+                        wrapEndPara();
+                        break;
+                    default: // bad command.
+                        wrapOut(&badCommand);
+                        wrapEndPara();
+                }
+            }else{
+                wrapOut(&badCommand);
+                wrapEndPara();
             }
         }
-        else if(commandBuffer.compare(0,endOfVerb,"drop") == 0){
+        else if(commandBuffer.compare(0,endOfVerb,"drop") == 0) {
             commandOk = true;
-            uint8_t state = currentState->dropObject(secCommand);
-            switch (state) {
-                case 0:  // dropped successfully.
-                    wrapOut(&dropObjectMessage0);
-                    wrapEndPara();
-                    break;
-                case 1: // already in the room.
-                    wrapOut(&dropObjectMessage1);
-                    wrapEndPara();
-                    break;
-                case 2: // cannot find.
-                    wrapOut(&dropObjectMessage2);
-                    wrapEndPara();
-                    break;
-                case 3: // no exist.
-                    wrapOut(&objectNotFound);
-                    wrapEndPara();
-                    break;
-                default: // bad command.
-                    wrapOut(&badCommand);
-                    wrapEndPara();
+            if (secCommand != "NULL") {
+                uint8_t state = currentState->dropObject(secCommand);
+                switch (state) {
+                    case 0:  // dropped successfully.
+                        wrapOut(&dropObjectMessage0);
+                        wrapEndPara();
+                        break;
+                    case 1: // already in the room.
+                        wrapOut(&dropObjectMessage1);
+                        wrapEndPara();
+                        break;
+                    case 2: // cannot find.
+                        wrapOut(&dropObjectMessage2);
+                        wrapEndPara();
+                        break;
+                    case 3: // no exist.
+                        wrapOut(&objectNotFound);
+                        wrapEndPara();
+                        break;
+                    default: // bad command.
+                        wrapOut(&badCommand);
+                        wrapEndPara();
+                }
+            }else{
+                wrapOut(&badCommand);
+                wrapEndPara();
             }
         }
-        else if(commandBuffer.compare(0,endOfVerb,"examine") == 0){
+        else if(commandBuffer.compare(0,endOfVerb,"examine") == 0) {
             commandOk = true;
-            GameObject* object = GameObject::searchAll(secCommand);
-            if (object != nullptr) GameObject::describe(object);
-            else{
-                wrapOut(&objectNotFound);
+            if (secCommand != "NULL") {
+                GameObject *object = GameObject::searchAll(secCommand);
+                if (object != nullptr) GameObject::describe(object);
+                else {
+                    wrapOut(&objectNotFound);
+                    wrapEndPara();
+                }
+            }else{
+                wrapOut(&badCommand);
                 wrapEndPara();
             }
         }
         else if(commandBuffer.compare(0,endOfVerb,"eat") == 0){
             commandOk = true;
-            uint8_t state = currentState->eat(secCommand);
-            string info = "Your strength is\40" + std::to_string(currentState->getStrength());
-            switch (state) {
-                case 0:
-                    wrapOut(&eatFoodMessage0);
-                    wrapEndPara();
-                    wrapOut(&info);
-                    wrapEndPara();
-                    break;
-                case 1:
-                    wrapOut(&eatFoodMessage1);
-                    wrapEndPara();
-                    break;
-                case 2:
-                    wrapOut(&eatFoodMessage2);
-                    wrapEndPara();
-                    break;
-                default:
-                    wrapOut(&badCommand);
-                    wrapEndPara();
+            if(secCommand!="NULL") {
+                uint8_t state = currentState->eat(secCommand);
+                string info = "Your strength is\40" + std::to_string(currentState->getStrength());
+                switch (state) {
+                    case 0:
+                        wrapOut(&eatFoodMessage0);
+                        wrapEndPara();
+                        wrapOut(&info);
+                        wrapEndPara();
+                        break;
+                    case 1:
+                        wrapOut(&eatFoodMessage1);
+                        wrapEndPara();
+                        break;
+                    case 2:
+                        wrapOut(&eatFoodMessage2);
+                        wrapEndPara();
+                        break;
+                    default:
+                        wrapOut(&badCommand);
+                        wrapEndPara();
+                }
+            }else{
+                wrapOut(&badCommand);
+                wrapEndPara();
             }
         }
 

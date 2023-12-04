@@ -1,6 +1,10 @@
-# Text Adventure: SDwCaCpp coursework 
+# Text Adventure: SDwCaCpp coursework   
+_Game engine version: v1.2.1  
+Document version v1.3 (Fourth modification)_  
+---
 This project is a **simple game engine** for a text adventure.    
 “**Text adventures**”, now called “interactive fiction”, were among the first type of computer game ever produced. These games have no graphics; the player reads the story of the game in text, and decides what their character will do by typing commands at a prompt.  
+---
 ## Features 
 There lists the main features of this engine.
 
@@ -12,28 +16,31 @@ There lists all the legal commands:
     If there doesn't exist a passage to which room, engine will prompt `You can't go that way.` 
 2. `get {keyword}`  
     Move object with matched `{keyword}` from the current room list into the inventory.  
-    There are **four possible situations** after using this command:
+    There are **five possible situations** after using this command:
    * If the object exists in the current room, it will prompt `Picked successfully.` after normal pickup
    * If the object already exists in the inventory, it cannot be picked up and prompt `This object is already in the inventory.`
    * If this object does not exist in the current room, it cannot be picked up and prompted `Cannot find that object in this room.`
-   * If the object does not exist, it cannot be picked up and prompts `This object doesn't exist.`  
+   * If the object does not exist, it cannot be picked up and prompts `This object doesn't exist.`   
+   * If player haven't typed the keyword after the command, it will prompt `I don't understand that.` (All subsequent commands requiring `{keyword}` will output this error message under this situation. For brevity, this potential output will not be repeated in the documentation for those later commands)  
 3. `drop {keyword}`  
    Move object with matched `{keyword}` from the inventory into the current room.  
-   There are **four possible situations** after using this command:  
+   There are **five possible situations** after using this command:  
     * If the object exists in the inventory, it will prompt `Dropped successfully.` after normal dropping
     * If the object already exists in the room, it cannot be dropped up and prompt `This object is already in the room.`
     * If this object does not exist in the current room, it cannot be dropped up and prompted `Cannot find that object in the inventory.`
     * If the object does not exist, it cannot be dropped up and prompts `This object doesn't exist.`  
+    * See `get {keyword}`  
 4. `inventory`  
    Print out the short names of all the objects in the inventory.
 5. `examine {keyword}`  
-   Print out the long description of the object with matched keyword. 
+   Print out the long description of the object with matched keyword.
 6. `eat {keyword}`  
    Print out the player’s strength after adding the energy of the food object with matched keyword to the player’s strength, which should not exceed 100.  
-   There are **three possible situations** after using this command:
+   There are **five possible situations** after using this command:
     * If the food exists in the inventory, it will prompt `You have eaten this food.` after normal eaten
     * If this food does not exist in the inventory, it cannot be eaten up and prompted `Cannot find that thing in the inventory.`
-    * If the object isn't a food, it cannot be eaten and prompts `You can't eat that.`
+    * If the object isn't a food, it cannot be eaten and prompts `You can't eat that.`  
+    * See `get {keyword}`  
 7. `quit`  
     Quit the game.
 
