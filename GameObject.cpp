@@ -9,6 +9,7 @@ using std::string;
 
 /*Global object list*/
 std::list<GameObject*> GameObject::allObjects;
+uint16_t GameObject::currentId = 0;
 
 /**
  * The constructor of class GameObject, construct the object and push it into global objects list.
@@ -17,8 +18,9 @@ std::list<GameObject*> GameObject::allObjects;
  * @param _keyword
  */
 GameObject::GameObject(const string* _name, const string* _desc, const string* _keyword):
-        name(_name), description(_desc), keyword(_keyword){
+        name(_name), description(_desc), keyword(_keyword), id(GameObject::currentId){
     GameObject::allObjects.push_back(this);
+    GameObject::currentId += 1;
 };
 GameObject::~GameObject() = default;
 
@@ -32,7 +34,7 @@ GameObject::~GameObject() = default;
 FoodObject::FoodObject(const std::string *_name, const std::string *_desc, const std::string *_keyword, uint8_t _energy):
         GameObject(_name,_desc,_keyword),energy(_energy){
     if(!(_energy >= 1 && _energy <= 10)){
-        throw std::invalid_argument("Energy should be limited in a range of 1-10");
+        energy = 1;
     }
 }
 

@@ -3,6 +3,7 @@
 #include "wordwrap.h"
 #include "strings.h"
 
+uint16_t Room::currentId = 1;
 /**
  * Stores a static list of all rooms.
  */
@@ -14,7 +15,9 @@ std::list<Room*> Room::rooms;
  * @param _desc Room's description.
  */
 Room::Room(const string* _name, const string *_desc) :
-        name(_name), description(_desc), north(nullptr),east(nullptr),west(nullptr),south(nullptr) {};
+        name(_name), description(_desc), north(nullptr),east(nullptr),west(nullptr),south(nullptr),id(currentId) {
+    Room::currentId += 1;
+};
 
 /**
  * Remove destroyed rooms from the static list.
@@ -104,4 +107,19 @@ GameObject *Room::addObject(const string* _name, const string *_desc, const stri
     auto* object = new GameObject(_name, _desc, _keyword);
     this->roomObjects.push_back(object);
     return object;
+}
+
+string Room::exportObjects() {
+    string idString;
+    for(Room* room:rooms){
+        idString.append(std::to_string(room->id));
+        idString.append("\40");
+        for(GameObject* object:room->roomObjects){
+            idString.append(std::to_string(object->id));
+            idString.append("\40");
+        }
+        idString.append("\n");
+    }
+    idString.erase(idString.end() - 1);
+    return idString;
 }

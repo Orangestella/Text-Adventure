@@ -7,6 +7,7 @@
 #include <string>
 #include <cstdint>
 #include <list>
+#include <fstream>
 
 using std::string;
 class GameObject {
@@ -14,10 +15,12 @@ public:
     const string* name;
     const string* description;
     const string* keyword;
+    const uint16_t id;
     virtual string getType();
     static std::list<GameObject*> allObjects;
     static GameObject* searchAll(const std::string &keyword);
     static void describe(GameObject* object);
+    static uint16_t currentId;
     GameObject(const string* _name, const string* _desc, const string* _keyword);
     ~GameObject();
 };

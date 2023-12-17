@@ -1,5 +1,5 @@
 
-
+#include <sstream>
 #include "State.h"
 #include "wordwrap.h"
 #include "strings.h"
@@ -150,8 +150,94 @@ uint8_t State::eat(const string &keyword) {
     uint8_t state = 0;
     GameObject* food = searchInventory(keyword);
     if (food == nullptr) state = 1;
-    else if(food->getType() == "food") this->changeStrength(dynamic_cast<FoodObject*>(food)->getEnergy());
+    else if(food->getType() == "food") {
+        this->changeStrength(dynamic_cast<FoodObject*>(food)->getEnergy());
+        inventory.remove(food);
+    }
     else state = 2;
     return state;
 }
 
+/**
+ * Export the inventory in plain text.
+ * @return The string with the information of objects in the inventory.
+ */
+string State::exportInventory() {
+    string idString = "0\40";
+    for(GameObject* object:inventory){
+        idString.append(std::to_string(object->id));
+        idString.append("\40");
+    }
+    return idString;
+}
+
+/**
+ * Load the state of game from a file stream.
+ * @param ifs The input file stream to load state.
+ */
+void State::loadState(std::ifstream &ifs) {
+    string validateStr;  //string to validate the file
+    string line;
+    uint16_t id;
+    getline(ifs, validateStr);
+    std::vector<uint16_t> idArray;
+    if(validateStr == "EDGAR VER1.3.0"){
+        ifs >> this->strength >> id;
+        for(Room* room:Room::rooms){
+            if(room->id == id){
+                this->currentRoom = room;
+                break; // stop iterating rooms after found
+            }
+        }
+        while(ifs.good()){
+            getline(ifs,line);
+            std::stringstream ss(line);
+            while(ss.good()){
+                ss >> id;
+                idArray.push_back(id);
+            }
+            for(Room* room:Room::rooms){
+                if(room->id == idArray[0]){
+                    room->roomObjects.clear(); // Empty for restore
+                    if (idArray.size() > 1) {
+                        for (uint16_t i = 1; i < idArray.size() - 1; i++) {
+                            for (GameObject *object: GameObject::allObjects) {
+                                if (object->id == idArray[i]) {
+                                    room->roomObjects.push_back(object);
+                                    break; // stop iterating objects after found
+                                }
+                            }
+                        }
+                    }
+                    break; // stop iterating rooms after found
+                }else if(idArray[0] == 0){ // 0 is reserved for inventory
+                    this->inventory.clear(); // Empty to restore
+                    if(idArray.size() > 1) {
+                        for (uint16_t i = 1; i < idArray.size() - 1; i++) {
+                            for (GameObject *object: GameObject::allObjects) {
+                                if (object->id == idArray[i]) {
+                                    this->inventory.push_back(object);
+                                    break; // stop iterating objects after found
+                                }
+                            }
+                        }
+                    }
+                    break; // stop iterating rooms after identified inventory
+                }
+            }
+            idArray.clear(); //  Empty the idArray to be ready for next line
+        }
+        if(ifs.eof()){ // read to the end
+            wrapOut(&loadOkMessage);
+            wrapEndPara();
+        }
+    }
+    else if(!ifs.good()){ // read fail
+        wrapOut(&loadFailMessage);
+        wrapEndPara();
+    }
+    else{ // validation fail
+        wrapOut(&validateFailMessage);
+        wrapEndPara();
+    }
+}

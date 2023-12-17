@@ -24,6 +24,8 @@ public:
     uint8_t dropObject(const string &keyword);
     void inventoryDescribe() const;
     uint8_t eat(const string &keyword);
+    string exportInventory();
+    void loadState(std::ifstream&);
 };
 
 

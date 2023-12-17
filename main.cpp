@@ -5,6 +5,7 @@
 #include <map>
 #include <chrono>
 #include <thread>
+#include <fstream>
 #include "Room.h"
 #include "wordwrap.h"
 #include "State.h"
@@ -202,7 +203,7 @@ void gameLoop() {
                         wrapEndPara();
                 }
             }else{
-                wrapOut(&badCommand);
+                wrapOut(&notGetMessage);
                 wrapEndPara();
             }
         }
@@ -232,7 +233,7 @@ void gameLoop() {
                         wrapEndPara();
                 }
             }else{
-                wrapOut(&badCommand);
+                wrapOut(&notDropMessage);
                 wrapEndPara();
             }
         }
@@ -246,7 +247,7 @@ void gameLoop() {
                     wrapEndPara();
                 }
             }else{
-                wrapOut(&badCommand);
+                wrapOut(&notExamMessage);
                 wrapEndPara();
             }
         }
@@ -275,7 +276,41 @@ void gameLoop() {
                         wrapEndPara();
                 }
             }else{
-                wrapOut(&badCommand);
+                wrapOut(&notEatMessage);
+                wrapEndPara();
+            }
+        }
+        else if(commandBuffer.compare(0,endOfVerb,"save") == 0){
+            commandOk = true;
+            if(secCommand!="NULL") {
+                //secCommand.append(".txt");
+                std::ofstream saveFile;
+                saveFile.open(secCommand,std::ios::out);
+                if(saveFile.is_open()){
+                    saveFile << "EDGAR VER1.3.0" << std::endl;
+                    saveFile << currentState->getStrength() << '\40' << currentState->getCurrentRoom()->id << std::endl;
+                    saveFile << currentState->exportInventory() << std::endl;
+                    saveFile << Room::exportObjects() << std::endl;
+                    if(saveFile.good()){
+                        wrapOut(&saveOkMessage);
+                        wrapEndPara();
+                    }
+                    saveFile.close();
+                }
+            }else{
+                wrapOut(&notSaveMessage);
+                wrapEndPara();
+            }
+        }
+        else if(commandBuffer.compare(0,endOfVerb,"load") == 0){
+            commandOk = true;
+            if(secCommand!="NULL"){
+                std::ifstream ifs(secCommand,std::ios::in);
+                currentState->loadState(ifs);
+                ifs.close();
+                currentState->announceLoc(); // announce the location after loading
+            }else{
+                wrapOut(&notLoadMessage);
                 wrapEndPara();
             }
         }

@@ -63,6 +63,8 @@ public:
      */
     static Room* addRoom(const string* _name, const string* _desc);
     static void addRoom(Room* room);
+    static uint16_t currentId;
+    static string exportObjects();
 
 
     Room* getNorth() const;
@@ -76,7 +78,7 @@ public:
 
     void addObject(GameObject* gameObject);
     GameObject* addObject(const string* _name, const string* _desc, const string* _keyword);
-
+    const uint16_t id;
 };
 
 #endif //TEXTADV_ROOM_H
