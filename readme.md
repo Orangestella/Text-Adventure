@@ -103,8 +103,3 @@ There are currently no experiments for this issue. It is recommended to use the 
 
 ## Todo  
 Increase the error tolerance of instruction input.  
-
-## Author 
-Edgar Hou (202118020425) CDUT-OBU L5S3  
-GitHub: https://github.com/Orangestella  
-Email: hou.guanyu@student.zy.cdut.edu.cn
