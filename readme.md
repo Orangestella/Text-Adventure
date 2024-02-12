@@ -98,8 +98,3 @@ EDGAR VER1.3.0
 ### Gameplay  
 Player's strength will be reduced by 1 per minute. Eating food can increase the strength. When strength goes to 0, the game shall be terminated.  
 
-## Environment Requirement  
-There are currently no experiments for this issue. It is recommended to use the Windows system to run the program.  
-
-## Todo  
-Increase the error tolerance of instruction input.  
