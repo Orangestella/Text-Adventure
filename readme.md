@@ -98,4 +98,4 @@ EDGAR VER1.3.0
 ### Gameplay  
 Player's strength will be reduced by 1 per minute. Eating food can increase the strength. When strength goes to 0, the game shall be terminated.
 
-2026-10-10：修复读档时物品丢失的问题，并完善存档校验。
+2026-10-10: Fixed item loss when loading saved games and improved save-file validation.
