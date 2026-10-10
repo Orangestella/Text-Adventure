@@ -15,7 +15,7 @@ std::list<Room*> Room::rooms;
  * @param _desc Room's description.
  */
 Room::Room(const string* _name, const string *_desc) :
-        name(_name), description(_desc), north(nullptr),east(nullptr),west(nullptr),south(nullptr),id(currentId) {
+        name(_name), description(_desc), north(nullptr),south(nullptr),east(nullptr),west(nullptr),id(currentId) {
     Room::currentId += 1;
 };
 

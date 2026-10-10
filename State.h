@@ -5,12 +5,13 @@
 
 
 #include <cstdint>
+#include <atomic>
 #include "Room.h"
 
 class State {
     Room *currentRoom;
     std::list<GameObject*> inventory;
-    int16_t strength;
+    std::atomic<int16_t> strength;
     GameObject* searchRoom(const string &keyword);
     GameObject* searchInventory(const string &keyword);
 public:
@@ -25,7 +26,7 @@ public:
     void inventoryDescribe() const;
     uint8_t eat(const string &keyword);
     string exportInventory();
-    void loadState(std::ifstream&);
+    bool loadState(std::istream&);
 };
 
 

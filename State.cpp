@@ -1,5 +1,7 @@
 
 #include <sstream>
+#include <unordered_map>
+#include <unordered_set>
 #include "State.h"
 #include "wordwrap.h"
 #include "strings.h"
@@ -44,8 +46,15 @@ Room* State::getCurrentRoom() const {
  * @param variation Value used to change the strength.
  */
 void State::changeStrength(int16_t variation) {
-    this->strength += variation;
-    if(this->strength > 100) strength = 100;
+    // The timer thread also updates strength, including during save/load.
+    int16_t previous = strength.load();
+    int16_t next;
+    do {
+        int value = static_cast<int>(previous) + variation;
+        if (value > 100) value = 100;
+        if (value < 0) value = 0;
+        next = static_cast<int16_t>(value);
+    } while (!strength.compare_exchange_weak(previous, next));
 }
 
 /**
@@ -53,7 +62,7 @@ void State::changeStrength(int16_t variation) {
  * @return
  */
 int16_t State::getStrength() const {
-    return this->strength;
+    return this->strength.load();
 }
 
 /**
@@ -175,69 +184,80 @@ string State::exportInventory() {
  * Load the state of game from a file stream.
  * @param ifs The input file stream to load state.
  */
-void State::loadState(std::ifstream &ifs) {
-    string validateStr;  //string to validate the file
+bool State::loadState(std::istream &ifs) {
+    auto fail = [](const string& message) {
+        wrapOut(&message);
+        wrapEndPara();
+        return false;
+    };
+    if (!ifs.good()) return fail(loadFailMessage);
+
     string line;
-    uint16_t id;
-    getline(ifs, validateStr);
-    std::vector<uint16_t> idArray;
-    if(validateStr == "EDGAR VER1.3.0"){
-        ifs >> this->strength >> id;
-        for(Room* room:Room::rooms){
-            if(room->id == id){
-                this->currentRoom = room;
-                break; // stop iterating rooms after found
+    if (!std::getline(ifs, line)) return fail(validateFailMessage);
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (line != "EDGAR VER1.3.0") return fail(validateFailMessage);
+
+    // Extract only successful, bounded decimal tokens. EOF is not a token.
+    auto parseNumbers = [](const string& text, std::vector<uint16_t>& values) {
+        std::istringstream input(text);
+        string token;
+        while (input >> token) {
+            unsigned int value = 0;
+            for (char digit : token) {
+                if (digit < '0' || digit > '9') return false;
+                value = value * 10 + static_cast<unsigned int>(digit - '0');
+                if (value > UINT16_MAX) return false;
             }
+            values.push_back(static_cast<uint16_t>(value));
         }
-        while(ifs.good()){
-            getline(ifs,line);
-            std::stringstream ss(line);
-            while(ss.good()){
-                ss >> id;
-                idArray.push_back(id);
+        return !input.bad();
+    };
+
+    std::vector<uint16_t> header;
+    if (!std::getline(ifs, line) || !parseNumbers(line, header) ||
+        header.size() != 2 || header[0] < 1 || header[0] > 100) {
+        return fail(validateFailMessage);
+    }
+
+    std::unordered_map<uint16_t, Room*> roomsById;
+    for (Room* room : Room::rooms) roomsById.emplace(room->id, room);
+    const auto targetRoom = roomsById.find(header[1]);
+    if (targetRoom == roomsById.end()) return fail(validateFailMessage);
+    std::unordered_map<uint16_t, GameObject*> objectsById;
+    for (GameObject* object : GameObject::allObjects) objectsById.emplace(object->id, object);
+
+    // Build a complete candidate snapshot before changing any live state.
+    std::unordered_map<uint16_t, std::list<GameObject*>> locations;
+    std::unordered_set<uint16_t> seenObjects;
+    while (std::getline(ifs, line)) {
+        std::vector<uint16_t> ids;
+        if (!parseNumbers(line, ids)) return fail(validateFailMessage);
+        if (ids.empty()) continue; // Blank lines do not describe a location.
+        const uint16_t locationId = ids.front();
+        if ((locationId != 0 && roomsById.count(locationId) == 0) ||
+            locations.count(locationId) != 0) return fail(validateFailMessage);
+
+        std::list<GameObject*> objects;
+        for (size_t i = 1; i < ids.size(); ++i) {
+            const auto object = objectsById.find(ids[i]);
+            if (object == objectsById.end() || !seenObjects.insert(ids[i]).second) {
+                return fail(validateFailMessage);
             }
-            for(Room* room:Room::rooms){
-                if(room->id == idArray[0]){
-                    room->roomObjects.clear(); // Empty for restore
-                    if (idArray.size() > 1) {
-                        for (uint16_t i = 1; i < idArray.size() - 1; i++) {
-                            for (GameObject *object: GameObject::allObjects) {
-                                if (object->id == idArray[i]) {
-                                    room->roomObjects.push_back(object);
-                                    break; // stop iterating objects after found
-                                }
-                            }
-                        }
-                    }
-                    break; // stop iterating rooms after found
-                }else if(idArray[0] == 0){ // 0 is reserved for inventory
-                    this->inventory.clear(); // Empty to restore
-                    if(idArray.size() > 1) {
-                        for (uint16_t i = 1; i < idArray.size() - 1; i++) {
-                            for (GameObject *object: GameObject::allObjects) {
-                                if (object->id == idArray[i]) {
-                                    this->inventory.push_back(object);
-                                    break; // stop iterating objects after found
-                                }
-                            }
-                        }
-                    }
-                    break; // stop iterating rooms after identified inventory
-                }
-            }
-            idArray.clear(); //  Empty the idArray to be ready for next line
+            objects.push_back(object->second);
         }
-        if(ifs.eof()){ // read to the end
-            wrapOut(&loadOkMessage);
-            wrapEndPara();
-        }
+        locations.emplace(locationId, std::move(objects));
     }
-    else if(!ifs.good()){ // read fail
-        wrapOut(&loadFailMessage);
-        wrapEndPara();
+    if (ifs.bad() || !ifs.eof() || locations.count(0) == 0 ||
+        locations.size() != roomsById.size() + 1) return fail(validateFailMessage);
+
+    // Objects absent from all locations (e.g. eaten food) remain absent.
+    inventory.swap(locations.at(0));
+    for (const auto& entry : roomsById) {
+        entry.second->roomObjects.swap(locations.at(entry.first));
     }
-    else{ // validation fail
-        wrapOut(&validateFailMessage);
-        wrapEndPara();
-    }
+    strength = static_cast<int16_t>(header[0]);
+    currentRoom = targetRoom->second;
+    wrapOut(&loadOkMessage);
+    wrapEndPara();
+    return true;
 }

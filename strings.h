@@ -66,6 +66,7 @@ const std::string notEatMessage = "What do you want to eat?";
 const std::string notSaveMessage = "Which file do you want to save in?";
 const std::string notLoadMessage = "Which file do you want to load in?";
 const std::string saveOkMessage = "Saved successfully.";
+const std::string saveFailMessage = "Could not save the game.";
 const std::string loadOkMessage = "Loaded successfully.";
 const std::string validateFailMessage = "The save file is not a valid file.";
 const std::string loadFailMessage = "The save file doesn't exist.";

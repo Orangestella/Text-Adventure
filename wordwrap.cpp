@@ -2,7 +2,9 @@
 
 
 #include <cstdint>
-#include <afxres.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <iterator>
 #include <iostream>
 
@@ -17,11 +19,16 @@ uint16_t currentConsoleOffset;
  */
 void initWordWrap() {
     /* Find the width of the console window. */
+    consoleWidth = 80; // Redirected output and non-Windows terminals use a safe fallback.
+#ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbi{};
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&csbi);
     /* We subtract 2 because Windows doesn't allow for the right hand scroll bar when reporting
      * width of command prompt windows. */
-    consoleWidth = static_cast<uint16_t>(csbi.srWindow.Right - csbi.srWindow.Left - 2);
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi) &&
+        csbi.srWindow.Right - csbi.srWindow.Left > 2) {
+        consoleWidth = static_cast<uint16_t>(csbi.srWindow.Right - csbi.srWindow.Left - 2);
+    }
+#endif
     currentConsoleOffset = 0;
 }
 

@@ -119,12 +119,13 @@ void gameLoop() {
         /* Ask for a command. */
         bool commandOk = false;
         inputCommand(&commandBuffer);
+        if (!std::cin) break;
 
         /* The first word of a command would normally be the verb. The first word is the text before the first
          * space, or if there is no space, the whole string. */
-        auto endOfVerb = static_cast<uint8_t>(commandBuffer.find(' '));
+        auto endOfVerb = commandBuffer.find(' ');
         /*Check if the command string contains space delimiters*/
-        if(endOfVerb != static_cast<uint8_t>(std::string::npos)) secCommand = commandBuffer.substr(endOfVerb+1);
+        if(endOfVerb != std::string::npos) secCommand = commandBuffer.substr(endOfVerb+1);
         else secCommand = "NULL"; //
 
         /* We could copy the verb to another string but there's no reason to, we'll just compare it in place. */
@@ -291,11 +292,17 @@ void gameLoop() {
                     saveFile << currentState->getStrength() << '\40' << currentState->getCurrentRoom()->id << std::endl;
                     saveFile << currentState->exportInventory() << std::endl;
                     saveFile << Room::exportObjects() << std::endl;
+                    saveFile.close(); // Check errors reported while flushing/closing too.
                     if(saveFile.good()){
                         wrapOut(&saveOkMessage);
                         wrapEndPara();
+                    }else{
+                        wrapOut(&saveFailMessage);
+                        wrapEndPara();
                     }
-                    saveFile.close();
+                }else{
+                    wrapOut(&saveFailMessage);
+                    wrapEndPara();
                 }
             }else{
                 wrapOut(&notSaveMessage);
@@ -306,9 +313,9 @@ void gameLoop() {
             commandOk = true;
             if(secCommand!="NULL"){
                 std::ifstream ifs(secCommand,std::ios::in);
-                currentState->loadState(ifs);
+                const bool loaded = currentState->loadState(ifs);
                 ifs.close();
-                currentState->announceLoc(); // announce the location after loading
+                if (loaded) currentState->announceLoc();
             }else{
                 wrapOut(&notLoadMessage);
                 wrapEndPara();

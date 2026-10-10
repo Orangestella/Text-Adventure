@@ -98,3 +98,74 @@ EDGAR VER1.3.0
 ### Gameplay  
 Player's strength will be reduced by 1 per minute. Eating food can increase the strength. When strength goes to 0, the game shall be terminated.  
 
+## 2026-10-10 本地排查与修复
+
+检查的原始版本：`39f4ea331272ac19b095068515782928d0a199bb`。
+
+### 已复现：游戏自己生成的存档也会丢物品
+
+在原版中输入以下命令（`slot` 是存档文件名）：
+
+```text
+get golden_apple
+w
+get melon_knife
+drop golden_apple
+save slot
+load slot
+inventory
+```
+
+读档前背包中有 Melon Knife，读档后背包变空。存档的背包记录从 `0 6` 变成了 `0`。
+另一条复现路径是 `n → get honey_cake → s → w → drop honey_cake → save slot → load slot`：
+此时房间 1 中的 Golden apple 消失。
+
+原因在 `State::loadState` 的两层循环：
+
+1. `while (ifs.good())` 判断的是**上一次**读取后的流状态。文件以换行结束时，还会再进入一次循环；随后 `getline` 读取失败，却继续处理空行。
+2. `while (ss.good())` 同样在确认数字读取成功前就进入循环，`ss >> id` 失败后仍将 `id` 加入数组。对于空行，`id` 保留上一次的值。
+3. 最后一条房间记录中的最后一个物品 ID，因此被误当成新的“位置 ID”。金苹果 ID 为 0，而位置 0 代表背包，于是代码执行 `inventory.clear()`；蜂蜜蛋糕 ID 为 1，则执行房间 1 的 `roomObjects.clear()`。
+4. 默认最后一个房间放的是 ID 为 6 的刀，而房间只编号 1–5，所以默认布局常常掩盖了这个错误。移动物品后它才显现。
+
+### 已复现：删除行尾空格后，每行最后一件物品丢失
+
+原代码使用 `i < idArray.size() - 1`，无条件忽略最后一个数字。
+这恰好抵消了“行尾有空格时，多追加一次旧 ID”的错误；当行尾没有空格时，最后一次成功读取直接设置 EOF，没有多余数字，真正的最后一件物品就被忽略。
+所以两个错误曾经互相掩盖，存档格式对不显眼的行尾空格产生了依赖。
+
+### 修复内容
+
+- 按 `getline` 的成功结果逐行读取，只处理成功解析的数字；忽略空行，读取全部物品，不再跳过最后一个。
+- 在临时结构中完整解析并验证存档，再替换背包、所有房间物品、位置和体力。错误版本、缺少记录、重复位置/物品、未知 ID、非数字、负数、溢出 ID 和不合法体力都会被拒绝，当前游戏状态保持不变。
+- 保持 `EDGAR VER1.3.0` 格式和旧版有效存档兼容；容许无行尾空格、无末尾换行、空行、制表符、CRLF/LF，以及位置记录顺序变化。所有房间和背包仍需各有一条记录。已经吃掉的食物可以不出现在任何记录中。
+- 保存失败给出提示，关闭文件后检查写入错误；只在读档成功时重新描述位置。
+- 体力改用原子操作，避免后台计时与主线程吃东西、存档、读档之间的数据竞争。
+- 去掉 `afxres.h` 的 MFC 依赖；Windows 控制台使用 `windows.h`，输出重定向时宽度默认 80。命令输入遇到 EOF 时退出，命令分隔位置使用 `size_t`，避免长命令截断。
+
+### 本机验证与运行
+
+使用 WinLibs GCC 16.2.0 / MinGW-w64，在 Windows 本机实际编译并运行。
+原版仅通过额外的 `afxres.h` 转接头引入 `windows.h` 以便构建，其游戏和读档逻辑未修改。
+修复版通过 `-Wall -Wextra -Wpedantic -Werror` 编译，存档测试共 10 个测试方法、36 个场景全部通过。
+另有 100 轮并发体力更新测试。测试使用真实游戏进程和保存文件，不只模拟解析函数。
+
+本地 PowerShell 构建与启动：
+
+```powershell
+.\build.ps1
+.\build\text-adventure.exe
+```
+
+`build.ps1` 自动找到此次放在上级 `.tools/mingw64` 的便携式编译器，也可用 `-Compiler '编译器完整路径'` 指定 GCC。
+回归测试使用 Python 标准库：
+
+```powershell
+python tests/save_load_test.py --exe build/text-adventure.exe
+```
+
+也提供常规 CMake/CTest 构建配置；此次本机验证使用 GCC 直接编译和上述 Python 测试。
+本地证据保存在 `build/evidence/original` 和 `build/evidence/fixed`，包含输入命令、控制台日志和读档前后存档。
+测试日志保存在 `build/original-tests.log`、`build/fixed-tests.log`。`build` 内容不纳入 Git。
+
+修复能避免再次读丢物品。如果原存档中还有物品记录，修复版能够正确读取；如果已用原版读丢物品后覆盖保存，文件中已缺失的信息无法自动恢复。
+

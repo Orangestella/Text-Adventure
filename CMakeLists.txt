@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.16)
+project(TextAdventure LANGUAGES CXX)
+
+find_package(Threads REQUIRED)
+add_executable(text-adventure main.cpp State.cpp Room.cpp GameObject.cpp wordwrap.cpp)
+target_compile_features(text-adventure PRIVATE cxx_std_17)
+target_link_libraries(text-adventure PRIVATE Threads::Threads)
+if(MSVC)
+    target_compile_options(text-adventure PRIVATE /W4)
+else()
+    target_compile_options(text-adventure PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(strength-test tests/strength_test.cpp State.cpp Room.cpp GameObject.cpp wordwrap.cpp)
+    target_include_directories(strength-test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_compile_features(strength-test PRIVATE cxx_std_17)
+    target_link_libraries(strength-test PRIVATE Threads::Threads)
+    add_test(NAME concurrent-strength COMMAND strength-test)
+    find_package(Python3 COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME save-load-regression
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/save_load_test.py"
+                    --exe "$<TARGET_FILE:text-adventure>")
+    endif()
+endif()
